@@ -88,7 +88,7 @@ In the `Makefile`, you might have to manually specify the CUDA architecture. For
 
 ## Contacts
 
-For any questions, comments, or discussions regarding potential collaborations (e.g., further development of the codebase for industrial-level applications), please feel free to [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact).
+For any questions, comments, or discussions regarding potential collaborations, please feel free to [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact).
 
 
 ## Acknowledgements
