@@ -16,7 +16,9 @@ Our open-sourcing process includes:
 
 ## Disclaimers
 
-This repository has NOT undergone security auditing and is NOT ready for industrial applications. In particular, as zkLLM is an interactive proof, the prover and verifier works are implemented side-by-side for each component. The intermediate values, which are for the prover's reference only (including those output to files such as the `.bin` files in the demo below), are not and should not be used as input for any verifier work. For industrial applications, it is necessary to separate the executions between the prover and the verifier, and ideally utilize the [Fiat-Shamir heuristic](https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic) to make the proof non-interactive. This would require a systematic re-design of the entire system. Please [contact Haochen Sun](#Contacts) if you have any ideas on this matter.
+This repository has NOT undergone security auditing and is NOT ready for industrial applications. In particular, as zkLLM is an interactive proof, the prover’s and verifier’s work are implemented side-by-side for each component. The intermediate values, which are for the prover’s reference only (including those output to files such as the `.bin` files in the demo below), should not be used as input for any verifier work. For industrial applications, it is necessary to separate the executions between the prover and the verifier, and ideally, utilize the [Fiat-Shamir heuristic] to make the proof non-interactive. This would require a systematic re-design of the entire system. 
+
+While Haochen welcomes your questions and comments **(see his contact methods [here](https://cs.uwaterloo.ca/~h299sun/#contact)!)**, please understand that he is working on his own new research projects and is unable to provide extensive support. In particular, it is inappropriate to expect or attempt to engage him in voluntary work on projects that primarily serve others’ financial interests.
 
 ## Requirements and Setup
 
