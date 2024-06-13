@@ -36,9 +36,11 @@ Also, to load the LLMs and run the experiments, you will need `torch`, `transfor
 pip install torch torchvision torchaudio transformers datasets
 ```
 
+In the `Makefile`, you might have to manually specify the CUDA architecture. For instance, for an NVIDIA RTX A6000, you should assign `sm_86` to `ARCH`.
+
 ## An Example with LLaMa-2
 
-The following is an example for LLaMa-2. Please note that the details for other models may vary.
+The following serves as an example for LLaMa-2. Please be aware that this version, which demonstrates the functionalities of loading, committing, computation, proof, and verification all combined, has been fundamentally refactored from the pre-refinement version that was primarily used for measuring the overhead of each component. Also, note that the details for other models may vary.
 
 First, download the models ([`meta-llama/Llama-2-7b-hf`](https://huggingface.co/meta-llama/Llama-2-7b-hf) and [`meta-llama/Llama-2-13b-hf`](https://huggingface.co/meta-llama/Llama-2-13b-hf)) from Hugging Face using `download-models.py`. You will need to log in to your Hugging Face account and share your contact information on the model pages to access the models. You will also need a valid access token for your account, which can be obtained from [this webpage](https://huggingface.co/settings/tokens) by generating a new token. Make sure to choose `Read` as the token type. Your token should look like this: `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` (note that this token has been deactivated and cannot be used). Then, run the following commands:
 
@@ -84,7 +86,7 @@ python llama-skip-connection.py --block_input_file $post_attn_norm_input --block
 
 For understanding the format of `.bin` files that store tensors in fixed-point formats (i.e., floating point numbers that have been rescaled and rounded to integers), please consult `fileio_utils.py`.
 
-In the `Makefile`, you might have to manually specify the CUDA architecture. For instance, for an NVIDIA RTX A6000, you should assign `sm_86` to `ARCH`.
+
 
 ## Contacts
 
