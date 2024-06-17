@@ -44,32 +44,33 @@ if __name__ == '__main__':
     layer.self_attn.rotary_emb.to(0)
     cos, sin = layer.self_attn.rotary_emb(torch.randn(1, args.seq_len, embed_dim, device = 0), torch.arange(args.seq_len, device = 0).unsqueeze(0))
 
+    # TODO: FIX THIS
     # print(Q.shape, K.shape, V.shape, cos.shape, sin.shape)
 
-    Q = (Q * cos) + (rotate_half(Q) * sin)
-    K = (K * cos) + (rotate_half(K) * sin)
+    # Q = (Q * cos) + (rotate_half(Q) * sin)
+    # K = (K * cos) + (rotate_half(K) * sin)
 
-    ref = torch.nn.functional.softmax((Q @ K.transpose(-2, -1)) / np.sqrt(layer.self_attn.head_dim), dim = -1)
-    attn_out = []
-    for i in range(layer.self_attn.num_heads):
-        head_Q, head_K, head_V = Q[i], K[i], V[i]
-        fileio_utils.save_int(head_Q, 1 << 16, f'temp_head_Q.bin')
-        fileio_utils.save_int(head_K, 1 << 16, f'temp_head_K.bin')
-        V[i].cpu().detach().numpy().astype(np.int32).tofile('temp_head_V.bin')
-        Vf = V[i] / (1<<16)
+    
+    # attn_out = []
+    # for i in range(layer.self_attn.num_heads):
+    #     head_Q, head_K, head_V = Q[i], K[i], V[i]
+    #     fileio_utils.save_int(head_Q, 1 << 16, f'temp_head_Q.bin')
+    #     fileio_utils.save_int(head_K, 1 << 16, f'temp_head_K.bin')
+    #     V[i].cpu().detach().numpy().astype(np.int32).tofile('temp_head_V.bin')
+    #     Vf = V[i] / (1<<16)
 
-        os.system(f'./self-attn head {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
-        Y = fileio_utils.load_long('temp_head_Y.bin').reshape(args.seq_len, args.seq_len)
-        Yf = Y / (1<<40)
-        _out = fileio_utils.load_int('temp_head_out.bin')
-        attn_out.append(_out)
+    #     os.system(f'./self-attn head {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
+    #     Y = fileio_utils.load_long('temp_head_Y.bin').reshape(args.seq_len, args.seq_len)
+    #     Yf = Y / (1<<40)
+    #     _out = fileio_utils.load_int('temp_head_out.bin')
+    #     attn_out.append(_out)
 
-    attn_out = torch.stack(attn_out).reshape(layer.self_attn.num_heads, args.seq_len, layer.self_attn.head_dim) # num_heads x seq_len x head_dim
-    attn_out = attn_out.transpose(0, 1).reshape(args.seq_len, embed_dim)
-    print(attn_out, attn_out / (1 << 16), attn_out.shape)
-    attn_out.cpu().detach().numpy().astype(np.int32).tofile('temp_attn_out.bin')
+    # attn_out = torch.stack(attn_out).reshape(layer.self_attn.num_heads, args.seq_len, layer.self_attn.head_dim) # num_heads x seq_len x head_dim
+    # attn_out = attn_out.transpose(0, 1).reshape(args.seq_len, embed_dim)
+    # print(attn_out, attn_out / (1 << 16), attn_out.shape)
+    # attn_out.cpu().detach().numpy().astype(np.int32).tofile('temp_attn_out.bin')
 
-    os.system(f'./self-attn o_linear {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
+    # os.system(f'./self-attn o_linear {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
     os.system('rm ./temp*.bin')
 
     # os.system('nvidia-smi')
