@@ -2,6 +2,8 @@
 
 Welcome to the official CUDA implementation of the paper *zkLLM: Zero Knowledge Proofs for Large Language Models* accepted to [ACM CCS 2024](https://www.sigsac.org/ccs/CCS2024/home.html), authored by [Haochen Sun](https://cs.uwaterloo.ca/~h299sun/), Jason Li, and [Hongyang Zhang](https://hongyanz.github.io/) from the University of Waterloo. The long version of the paper is [available on arXiv](https://arxiv.org/abs/2404.16109).
 
+*Note: This repository is subject to occasional updates to incorporate better designs and hyperparameters.*
+
 ## Updates
 
 - **[2024-05-17]** Implemented enhancements to align the open-sourced version with both the original, pre-refinement codebase and the original LLaMa-2 model.
@@ -11,8 +13,8 @@ Welcome to the official CUDA implementation of the paper *zkLLM: Zero Knowledge 
 Our open-sourcing process includes:
 - [x] The wheel of tensors over the `BLS12-381` elliptic curve.
 - [x] Implementation of `tlookup` and `zkAttn`, two major technical components of *zkLLM*.
-- [x] The proof of all components of the entire inference process.
-- [ ] Work in progress: Fully automated verifiable inference pipeline for LLMs.
+- [x] The proof of the entire inference process.
+- [ ] Work in progress: The seperation the computation and the interactive proof in the demo. 
 
 ## Disclaimers
 
@@ -42,7 +44,7 @@ In the `Makefile`, you might have to manually specify the CUDA architecture. For
 
 The following serves as an example for LLaMa-2. Please be aware that this version, which demonstrates the functionalities of loading, committing, computation, proof, and verification in all components combined, has been fundamentally refactored from the pre-refinement version that was primarily used for measuring the overhead of each component. Also, note that the details for other models may vary.
 
-First, download the models ([`meta-llama/Llama-2-7b-hf`](https://huggingface.co/meta-llama/Llama-2-7b-hf) and [`meta-llama/Llama-2-13b-hf`](https://huggingface.co/meta-llama/Llama-2-13b-hf)) from Hugging Face using `download-models.py`. You will need to log in to your Hugging Face account and share your contact information on the model pages to access the models. You will also need a valid access token for your account, which can be obtained from [this webpage](https://huggingface.co/settings/tokens) by generating a new token. Make sure to choose `Read` as the token type. Your token should look like this: `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` (note that this token has been deactivated and cannot be used). Then, run the following commands:
+First, download the models ([`meta-llama/Llama-2-7b-hf`](https://huggingface.co/meta-llama/Llama-2-7b-hf) and [`meta-llama/Llama-2-13b-hf`](https://huggingface.co/meta-llama/Llama-2-13b-hf)) from Hugging Face using `download-models.py`. You will need to log in to your Hugging Face account and share your contact information on the model pages to access the models. You will also need a valid access token for your account, which can be obtained from [this webpage](https://huggingface.co/settings/tokens) by generating a new token. Make sure to choose `Read` as the token type. Your token should look like this: `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` (note that this token has been deactivated and cannot be used). Then, run the following commands to download the models:
 
 ```bash 
 # replace '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' with your own token
@@ -60,7 +62,7 @@ python llama-commit.py $model_size 16 # the default scaling factor is (1 << 16).
 
 Here, `llama-ppgen.py` generates the public parameters used in the commitment scheme. Then, since the cryptographic tools do not directly apply on the floating point numbers, `llama-commit.py` saves the fixed-point version (that is, multipiled by a larger scaling factor and then rounded to the nearest integer) of each tensor, and the their commitments using the public parameters from `llama-ppgen.py`.
 
-Once committed, load your model and input and assemble the proof by recurrently running the followings for all layers.
+Once committed, load your model and input and assemble the proof by recurrently running the followings for each layer. For understanding the format of `.bin` files that store tensors in fixed-point formats (i.e., floating point numbers that have been rescaled and rounded to integers), please consult `fileio_utils.py`.
 
 ```bash
 input=layer_input.bin
@@ -84,9 +86,7 @@ python llama-ffn.py $model_size $layer_number $sequence_length --input_file $ffn
 python llama-skip-connection.py --block_input_file $post_attn_norm_input --block_output_file $ffn_output --output_file $output
 ```
 
-For understanding the format of `.bin` files that store tensors in fixed-point formats (i.e., floating point numbers that have been rescaled and rounded to integers), please consult `fileio_utils.py`.
-
-
+Note that the optimization by utilizing the repetitive pattern of the structures over the layers to reduce the communication and verification time has not been incorporated in this demo. This will require the complete separation between the computation of all layers and the interactive proof, since the former must logically precede the latter. Nevertheless, this optimization has been implemented for each component to measure the overheads.
 
 ## Contacts
 
