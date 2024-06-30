@@ -2,11 +2,7 @@
 
 Welcome to the official CUDA implementation of the paper *zkLLM: Zero Knowledge Proofs for Large Language Models* accepted to [ACM CCS 2024](https://www.sigsac.org/ccs/CCS2024/home.html), authored by [Haochen Sun](https://cs.uwaterloo.ca/~h299sun/), Jason Li, and [Hongyang Zhang](https://hongyanz.github.io/) from the University of Waterloo. The long version of the paper is [available on arXiv](https://arxiv.org/abs/2404.16109).
 
-*Note: This repository is subject to occasional updates to incorporate better designs and hyperparameters.*
-
-## Updates
-
-- **[2024-05-17]** Implemented enhancements to align the open-sourced version with both the original, pre-refinement codebase and the original LLaMa-2 model.
+*Note: This repository is currently under fix to incorporate a better set of hyperparameters.*
 
 ## Open-Sourcing Progress
 
@@ -88,8 +84,7 @@ Note that the optimization by utilizing the repetitive pattern of the structures
 
 ## Contacts
 
-Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for questions and comments. 
-
+Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for questions and comments. However, please note that he is no longer working on the topic of zero-knowledge deep learning.
 
 ## Acknowledgements
 
