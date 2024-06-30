@@ -2,6 +2,7 @@ import os, sys
 import argparse
 import torch
 import numpy as np
+import math
 
 parser = argparse.ArgumentParser(description='LLaMa-2 Self-Attention')
 parser.add_argument('model_size', type=int, choices = [7, 13], help='The size of the model to use. Default is 13')
@@ -11,7 +12,10 @@ parser.add_argument('--input_file', required = True, type=str, help='The input f
 parser.add_argument('--output_file', default = 'llama-self-attn-output.bin', type=str, help='The output file to use for self-attn')
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import fileio_utils
+from fileio_utils import *
+
+VALUE_LOGSF = 16
+ACCU_LOGSF = 20
 
 def rotate_half(x):
     """Rotates half the hidden dims of the input."""
@@ -33,9 +37,9 @@ if __name__ == '__main__':
 
     workdir = f'./zkllm-workdir/Llama-2-{args.model_size}b'
     layer_prefix = f'layer-{args.layer}'
-    os.system(f'./self-attn qkv_linear {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
+    os.system(f'./self-attn linear {args.input_file} {args.seq_len} {embed_dim} {workdir} {layer_prefix} {args.output_file}')
 
-    Q, K, V = fileio_utils.load_int('temp_Q.bin').reshape(args.seq_len, embed_dim) / (1 << 16), fileio_utils.load_int('temp_K.bin').reshape(args.seq_len, embed_dim) / (1 << 16), fileio_utils.load_int('temp_V.bin').reshape(args.seq_len, embed_dim)
+    Q, K, V = load_int('temp_Q.bin').reshape(args.seq_len, embed_dim) / (1 << 16), load_int('temp_K.bin').reshape(args.seq_len, embed_dim) / (1 << 16), load_int('temp_V.bin').reshape(args.seq_len, embed_dim) / (1 << 16)
 
     Q = Q.view(args.seq_len, layer.self_attn.num_heads, layer.self_attn.head_dim).transpose(0, 1)
     K = K.view(args.seq_len, layer.self_attn.num_heads, layer.self_attn.head_dim).transpose(0, 1)
@@ -44,34 +48,29 @@ if __name__ == '__main__':
     layer.self_attn.rotary_emb.to(0)
     cos, sin = layer.self_attn.rotary_emb(torch.randn(1, args.seq_len, embed_dim, device = 0), torch.arange(args.seq_len, device = 0).unsqueeze(0))
 
-    # TODO: FIX THIS
-    # print(Q.shape, K.shape, V.shape, cos.shape, sin.shape)
-
-    # Q = (Q * cos) + (rotate_half(Q) * sin)
-    # K = (K * cos) + (rotate_half(K) * sin)
-
+    Q, K = Q * cos + rotate_half(Q) * sin, K * cos + rotate_half(K) * sin
+    Q, K = Q.to(torch.float64), K.to(torch.float64)
     
-    # attn_out = []
-    # for i in range(layer.self_attn.num_heads):
-    #     head_Q, head_K, head_V = Q[i], K[i], V[i]
-    #     fileio_utils.save_int(head_Q, 1 << 16, f'temp_head_Q.bin')
-    #     fileio_utils.save_int(head_K, 1 << 16, f'temp_head_K.bin')
-    #     V[i].cpu().detach().numpy().astype(np.int32).tofile('temp_head_V.bin')
-    #     Vf = V[i] / (1<<16)
+    A_ = Q @ K.transpose(-2, -1)
+    A = to_int64(A_, VALUE_LOGSF)
 
-    #     os.system(f'./self-attn head {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
-    #     Y = fileio_utils.load_long('temp_head_Y.bin').reshape(args.seq_len, args.seq_len)
-    #     Yf = Y / (1<<40)
-    #     _out = fileio_utils.load_int('temp_head_out.bin')
-    #     attn_out.append(_out)
+    # an upper triangular mask for perplexity
+    mask = torch.triu(torch.ones(args.seq_len, args.seq_len, device = 0, dtype = bool), diagonal = 1)
 
-    # attn_out = torch.stack(attn_out).reshape(layer.self_attn.num_heads, args.seq_len, layer.self_attn.head_dim) # num_heads x seq_len x head_dim
-    # attn_out = attn_out.transpose(0, 1).reshape(args.seq_len, embed_dim)
-    # print(attn_out, attn_out / (1 << 16), attn_out.shape)
-    # attn_out.cpu().detach().numpy().astype(np.int32).tofile('temp_attn_out.bin')
+    A -= torch.max(A * ~mask, dim = -1, keepdim = True).values 
 
-    # os.system(f'./self-attn o_linear {args.input_file} {args.seq_len} {layer.self_attn.num_heads} {layer.self_attn.head_dim} {workdir} {layer_prefix} {args.output_file}')
+    shift = math.sqrt(layer.self_attn.head_dim) * torch.log((torch.exp((to_float(A, ACCU_LOGSF) / math.sqrt(layer.self_attn.head_dim))) * ~mask).sum(axis = -1, keepdim = True))
+    shift = to_int64(shift, ACCU_LOGSF)
+    A -= shift
+    attn_output = (torch.exp(to_float(A, ACCU_LOGSF, torch.float64) / math.sqrt(layer.self_attn.head_dim)).float()) * ~mask
+
+    attn_output = attn_output @ V
+    attn_output = fromto_int64(attn_output, VALUE_LOGSF)
+
+    attn_output = attn_output.transpose(0, 1).contiguous()
+    attn_output = attn_output.view(args.seq_len, embed_dim)
+    attn_output = attn_output.transpose(0, 1).reshape(args.seq_len, embed_dim)
+    save_int(attn_output, 1 << 16, 'temp_attn_out.bin') 
+    os.system(f'./self-attn attn {args.input_file} {args.seq_len} {embed_dim} {workdir} {layer_prefix} {args.output_file}')
     os.system('rm ./temp*.bin')
-
-    # os.system('nvidia-smi')
 
