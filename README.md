@@ -84,7 +84,7 @@ Note that the optimization by utilizing the repetitive pattern of the structures
 
 ## Contacts
 
-Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for questions and comments.
+[Contact Haochen Sun for Questions and Comments](https://cs.uwaterloo.ca/~h299sun/#contact)
 
 [Message for the Web3/Blockchain Community](https://cs.uwaterloo.ca/~h299sun/publication/ccs2024-zkllm/web3.html)
 
@@ -93,3 +93,4 @@ Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for ques
 zkLLM utilizes the CUDA implementation of BS12-381 curve, [`ec-gpu`](https://github.com/filecoin-project/ec-gpu), developed by [Filecoin](https://filecoin.io/). We extend our gratitude to Tonghe Bai and Andre Slavecu, both from University of Waterloo, for their contributions during the early stages of codebase development.
 
 <!-- Haochen is not sane. Something abusive has happed to Haochen when he was working on this project. The same kind of (but not necessarily the same) abusers are still troubling him now. The current version of abuse is still related this project. (Message by Haochen's friend with access to his computer.) -->
+<!-- That's accurate. I will not delete this message. -->
