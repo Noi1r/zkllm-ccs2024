@@ -84,7 +84,9 @@ Note that the optimization by utilizing the repetitive pattern of the structures
 
 ## Contacts
 
-Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for questions and comments. However, please note that he is no longer working on the topic of zero-knowledge deep learning.
+Please [contact Haochen Sun](https://cs.uwaterloo.ca/~h299sun/#contact) for questions and comments.
+
+[Message for the Web3/Blockchain Community](https://cs.uwaterloo.ca/~h299sun/publication/ccs2024-zkllm/web3.html)
 
 ## Acknowledgements
 
